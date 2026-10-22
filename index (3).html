@@ -1,0 +1,2631 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <base target="_top">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+  <title>MySIB</title>
+  <?!= include('Style'); ?>
+  <!-- Library untuk Menampilkan QR Code Siswa -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+  <!-- Library untuk Scan QR Code Kamera -->
+  <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+  <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
+</head>
+<style>
+
+    @media print {
+    body * {
+      visibility: hidden;
+    }
+    #printArea, #printArea * {
+      visibility: visible;
+    }
+    #printArea {
+      position: absolute;
+      left: 0;
+      top: 0;
+      width: 100%;
+    }
+    .no-print {
+      display: none !important;
+    }
+  }
+  #printArea {
+    display: none;
+  }
+/* ==========================================================================
+   1. VARIABEL & RESET DASAR
+   ========================================================================== */
+:root {
+  --primary: #0f766e;
+  --primary2: #115e59;
+  --bg: #f3f6f8;
+  --card: #ffffff;
+  --text: #172033;
+  --muted: #64748b;
+  --danger: #dc2626;
+  --border: #e2e8f0;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html, body {
+  margin: 0;
+  padding: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  font-size: 13px; /* Ukuran font lebih kompak */
+  -webkit-font-smoothing: antialiased;
+}
+
+button, input, select, textarea {
+  font: inherit;
+}
+
+button {
+  cursor: pointer;
+}
+
+.hidden {
+  display: none !important;
+}
+
+.muted {
+  color: var(--muted);
+}
+
+/* ==========================================================================
+   2. HALAMAN LOGIN
+   ========================================================================== */
+.login-screen {
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  padding: 20px;
+  background: linear-gradient(135deg, #0f766e, #164e63);
+}
+
+.login-card {
+  width: min(420px, 100%);
+  background: #ffffff;
+  border-radius: 24px;
+  padding: 32px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.18);
+  text-align: center;
+}
+
+.brand-logo {
+  width: 70px;
+  height: 70px;
+  border-radius: 22px;
+  background: var(--primary);
+  color: #ffffff;
+  display: grid;
+  place-items: center;
+  margin: 0 auto 14px;
+  font-size: 24px;
+  font-weight: 800;
+}
+
+.login-card h1 {
+  margin: 0;
+  font-size: 28px;
+}
+
+.login-card p {
+  margin-top: 4px;
+  margin-bottom: 28px;
+}
+
+.login-card form {
+  text-align: left;
+}
+
+/* ==========================================================================
+   3. FORM & INPUT
+   ========================================================================== */
+.login-card label, 
+.form-grid label {
+  display: block;
+  font-size: 12px;
+  font-weight: 700;
+  margin: 10px 0 4px;
+}
+
+input, select, textarea {
+  width: 100%;
+  padding: 9px 12px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: #ffffff;
+  outline: none;
+  font-size: 13px;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+input:focus, select:focus, textarea:focus {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(15, 118, 110, 0.12);
+}
+
+textarea {
+  min-height: 80px;
+  resize: vertical;
+}
+
+/* ==========================================================================
+   4. TOMBOL (BUTTONS)
+   ========================================================================== */
+.btn {
+  border: 0;
+  border-radius: 8px;
+  padding: 8px 14px;
+  font-weight: 700;
+  font-size: 12px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  transition: opacity 0.2s, background 0.2s;
+}
+
+.btn:hover {
+  opacity: 0.9;
+}
+
+.btn.primary {
+  background: var(--primary);
+  color: #ffffff;
+}
+
+.btn.secondary {
+  background: #e2e8f0;
+  color: #172033;
+}
+
+.btn.danger {
+  background: #fee2e2;
+  color: #991b1b;
+}
+
+.btn.full {
+  width: 100%;
+  margin-top: 18px;
+}
+
+/* ==========================================================================
+   5. LAYOUT UTAMA (SIDEBAR, TOPBAR, CONTENT)
+   ========================================================================== */
+.sidebar {
+  position: fixed;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 250px;
+  background: #0f172a;
+  color: #ffffff;
+  padding: 18px 12px;
+  z-index: 30;
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+.sidebar-brand {
+  font-size: 22px;
+  font-weight: 900;
+  padding: 10px 12px 20px;
+  color: #99f6e4;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.nav-item {
+  width: 100%;
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  border: 0;
+  background: transparent;
+  color: #cbd5e1;
+  padding: 10px 12px;
+  border-radius: 8px;
+  margin: 2px 0;
+  text-align: left;
+  font-size: 13px;
+  transition: background 0.2s, color 0.2s;
+}
+
+.nav-item:hover, 
+.nav-item.active {
+  background: #134e4a;
+  color: #ffffff;
+  font-weight: 600;
+}
+
+.topbar {
+  position: fixed;
+  top: 0;
+  left: 250px;
+  right: 0;
+  height: 60px;
+  background: #ffffff;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 0 20px;
+  z-index: 20;
+}
+
+.icon-btn {
+  border: 0;
+  background: transparent;
+  font-size: 20px;
+  padding: 6px 10px;
+  border-radius: 8px;
+  color: var(--text);
+}
+
+.icon-btn:hover {
+  background: #f1f5f9;
+}
+
+.app-title {
+  font-weight: 800;
+  color: var(--primary);
+  font-size: 16px;
+}
+
+.page-title {
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.top-actions {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.user-badge {
+  font-size: 11px;
+  font-weight: 700;
+  background: #ecfdf5;
+  color: #047857;
+  padding: 6px 12px;
+  border-radius: 999px;
+}
+
+.content {
+  margin-left: 250px;
+  padding: 80px 20px 80px;
+  min-height: 100vh;
+}
+
+.bottom-nav {
+  display: none;
+}
+
+.page-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.page-head h2 {
+  margin: 0;
+  font-size: 20px;
+}
+
+.actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+/* ==========================================================================
+   6. CARD & DASHBOARD STATS
+   ========================================================================== */
+.card {
+  background: #ffffff;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 16px;
+  margin-bottom: 16px;
+}
+
+.card h3 {
+  margin-top: 0;
+  margin-bottom: 12px;
+  font-size: 15px;
+}
+
+.stats {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.stat {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 14px;
+}
+
+.stat .icon {
+  font-size: 22px;
+}
+
+.stat .num {
+  font-size: 24px;
+  font-weight: 800;
+  margin-top: 6px;
+}
+
+.stat .label {
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.quick-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+}
+
+.quick {
+  border: 1px solid var(--border);
+  background: #ffffff;
+  padding: 14px;
+  border-radius: 12px;
+  text-align: left;
+}
+
+.quick strong {
+  display: block;
+  margin-top: 6px;
+}
+
+.kpi-note {
+  font-size: 11px;
+  color: var(--muted);
+}
+
+.grid2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+}
+
+.form-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 4px 12px;
+}
+
+.full-col {
+  grid-column: 1 / -1;
+}
+
+/* ==========================================================================
+   7. TABEL DATA & BADGES
+   ========================================================================== */
+.table-wrap, 
+.table-responsive {
+  width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  margin-top: 8px;
+}
+
+.data-table, 
+.table-responsive table {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 650px;
+}
+
+.data-table th, 
+.data-table td,
+.table-responsive th, 
+.table-responsive td {
+  border-bottom: 1px solid var(--border);
+  padding: 8px 10px;
+  text-align: left;
+  font-size: 12px;
+  white-space: nowrap;
+}
+
+.data-table th, 
+.table-responsive th {
+  background: #f8fafc;
+  position: sticky;
+  top: 0;
+  font-weight: 700;
+  color: #334155;
+}
+
+.table-actions {
+  white-space: nowrap;
+}
+
+.table-actions button {
+  margin-right: 4px;
+}
+
+.badge {
+  display: inline-block;
+  padding: 3px 8px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.badge.ok, .badge.success {
+  background: #dcfce7;
+  color: #166534;
+}
+
+.badge.no, .badge.danger {
+  background: #fee2e2;
+  color: #991b1b;
+}
+
+.badge.info {
+  background: #dbeafe;
+  color: #1d4ed8;
+}
+
+/* ==========================================================================
+   8. MODAL, TOAST & LOADING
+   ========================================================================== */
+.modal {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.55);
+  display: grid;
+  place-items: center;
+  padding: 16px;
+  z-index: 100;
+}
+
+.modal-card {
+  width: min(720px, 100%);
+  max-height: 90vh;
+  overflow-y: auto;
+  background: #ffffff;
+  border-radius: 16px;
+}
+
+.modal-head {
+  position: sticky;
+  top: 0;
+  background: #ffffff;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  padding: 12px 16px;
+  z-index: 2;
+}
+
+.modal-head h3 {
+  margin: 0;
+  font-size: 16px;
+}
+
+.modal-head .icon-btn {
+  margin-left: auto;
+}
+
+.modal-body, 
+.modal-card > #modalBody {
+  padding: 16px;
+}
+
+.form-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 16px;
+}
+
+.toast {
+  position: fixed;
+  right: 18px;
+  bottom: 18px;
+  background: #0f172a;
+  color: #ffffff;
+  padding: 10px 14px;
+  border-radius: 8px;
+  font-size: 12px;
+  opacity: 0;
+  transform: translateY(10px);
+  transition: opacity 0.2s, transform 0.2s;
+  z-index: 200;
+  pointer-events: none;
+}
+
+.toast.show {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.loading {
+  position: fixed;
+  inset: 0;
+  background: rgba(255, 255, 255, 0.65);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  gap: 10px;
+  z-index: 250;
+}
+
+.spinner {
+  width: 36px;
+  height: 36px;
+  border: 4px solid #d1d5db;
+  border-top-color: var(--primary);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Sembunyikan tombol close sidebar secara default di Desktop */
+.btn-close-sidebar {
+  display: none;
+}
+
+/* Print Handling */
+@media print {
+  body * {
+    visibility: hidden;
+  }
+  .modal, .modal *, .id-card-container, .id-card-container * {
+    visibility: visible;
+  }
+  .modal {
+    position: absolute;
+    left: 0;
+    top: 0;
+    background: transparent;
+  }
+  .no-print {
+    display: none !important;
+  }
+}
+
+/* ==========================================================================
+   9. RESPONSIVE DESIGN (TABLET & MOBILE)
+   ========================================================================== */
+@media (max-width: 900px) {
+  .sidebar {
+    transform: translateX(-100%);
+    transition: transform 0.2s ease-in-out;
+    overflow-y: auto;
+    overflow-x: hidden;
+  }
+  
+  .sidebar.open {
+    transform: translateX(0);
+  }
+  
+  .topbar {
+    left: 0;
+  }
+  
+  .content {
+    margin-left: 0;
+    padding: 74px 14px 80px;
+  }
+  
+  .stats {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  
+  .grid2 {
+    grid-template-columns: 1fr;
+  }
+  
+  .quick-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  
+  /* Bottom Navigation Mobile */
+  .bottom-nav {
+    display: flex;
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 60px;
+    background: #ffffff;
+    border-top: 1px solid var(--border);
+    z-index: 40;
+    justify-content: space-around;
+  }
+  
+  .bottom-nav button {
+    border: 0;
+    background: #ffffff;
+    color: var(--muted);
+    font-size: 11px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 2px;
+    min-width: 55px;
+  }
+  
+  .bottom-nav button.active {
+    color: var(--primary);
+    font-weight: 800;
+  }
+
+  /* Tombol Close Sidebar Khusus Layar Mobile */
+  .btn-close-sidebar {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: transparent;
+    border: none;
+    color: #94a3b8;
+    font-size: 20px;
+    font-weight: bold;
+    cursor: pointer;
+    padding: 6px;
+    border-radius: 6px;
+  }
+  
+  .btn-close-sidebar:hover {
+    color: #ffffff;
+    background: rgba(255, 255, 255, 0.1);
+  }
+}
+
+@media (max-width: 560px) {
+  .stats {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 8px;
+  }
+  
+  .stat {
+    padding: 10px;
+  }
+  
+  .stat .num {
+    font-size: 20px;
+  }
+  
+  .form-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .full-col {
+    grid-column: auto;
+  }
+  
+  .page-head {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+  
+  .quick-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  
+  .login-card {
+    padding: 24px;
+  }
+}
+</style>
+<body>
+<div id="app">
+  <section id="loginView" class="login-screen">
+    <div class="login-card">
+      <div class="brand-logo">MS</div>
+      <h1>MySIB</h1>
+      <p class="muted">Sistem Informasi Belajar</p>
+      <form id="loginForm">
+        <label>Username</label>
+        <input id="loginUsername" autocomplete="username" required>
+        <label>Password</label>
+        <input id="loginPassword" type="password" autocomplete="current-password" required>
+        <button class="btn primary full" type="submit">Masuk</button>
+      </form>
+      <small class="muted">Default awal: admin / admin123</small>
+    </div>
+  </section>
+
+  <section id="mainView" class="hidden">
+    <header class="topbar">
+      <button class="icon-btn" id="menuBtn">☰</button>
+      <div>
+        <div class="app-title">MySIB</div>
+        <div id="pageTitle" class="page-title">Dashboard</div>
+      </div>
+      <div class="top-actions">
+        <span id="userBadge" class="user-badge"></span>
+        <button class="icon-btn" id="logoutBtn" title="Keluar">↪</button>
+      </div>
+    </header>
+
+    <aside id="sidebar" class="sidebar">
+      <div class="sidebar-header" style="display: flex; justify-content: space-between; align-items: center;">
+        <div class="sidebar-brand">MySIB</div>
+        <button type="button" class="btn-close-sidebar" onclick="toggleSidebar(false)">✕</button>
+      </div>
+
+      <div class="sidebar-menu">
+        <button class="nav-item active" data-page="dashboard">🏠 <span>Dashboard</span></button>
+        <button class="nav-item admin-only" data-page="guru">👨‍🏫 <span>Guru</span></button>
+        <button class="nav-item admin-only" data-page="kelas">🏫 <span>Kelas</span></button>
+        <button class="nav-item" data-page="siswa">👨‍🎓 <span>Siswa</span></button>
+        <button class="nav-item admin-only" data-page="mapel">📚 <span>Mata Pelajaran</span></button>
+        <button class="nav-item" data-page="jadwal">📅 <span>Jadwal</span></button>
+        <button class="nav-item" data-page="presensi">🟢 <span>Presensi</span></button>
+        <button class="nav-item" data-page="nilai">📊 <span>Nilai</span></button>
+        <button class="nav-item" data-page="jurnal">📝 <span>Jurnal</span></button>
+        <button class="nav-item" data-page="catatan">📖 <span>Catatan Siswa</span></button>
+        <button class="nav-item" data-page="laporan">📑 <span>Laporan</span></button>
+        <button class="nav-item" data-page="spp">💳 <span>Pembayaran SPP</span></button>
+        <button class="nav-item" data-page="kartuSpp">🪪 <span>Kartu SPP</span></button>
+        <button class="nav-item admin-only" data-page="pengguna">👤 <span>Pengguna</span></button>
+        <button class="nav-item admin-only" data-page="pengaturan">⚙️ <span>Pengaturan</span></button>
+      </div>
+    </aside>
+
+    <main id="content" class="content"></main>
+
+    <nav class="bottom-nav">
+      <button data-page="dashboard" class="active">🏠<span>Home</span></button>
+      <button data-page="siswa">👨‍🎓<span>Siswa</span></button>
+      <button data-page="presensi">🟢<span>Absen</span></button>
+      <button data-page="jurnal">📝<span>Jurnal</span></button>
+      <button data-page="laporan">📑<span>Laporan</span></button>
+    </nav>
+  </section>
+
+  <div id="modal" class="modal hidden">
+    <div class="modal-card">
+      <div class="modal-head"><h3 id="modalTitle"></h3><button id="modalClose" class="icon-btn">×</button></div>
+      <div id="modalBody"></div>
+    </div>
+  </div>
+  <div id="toast" class="toast"></div>
+  <div id="loading" class="loading hidden"><div class="spinner"></div><span>Memproses...</span></div>
+</div>
+
+<script>
+const state = {
+  user: null, page: 'dashboard', data: {}, dashboard: null, editing: null
+};
+
+// URL WEBAPP GOOGLE APPS SCRIPT
+const WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbwsyanNF8j6SfB1YtZd5nTuAxFxTDaQcR-RmxihNPP-4wNtDUIRQ9zLf-Ugac6d--AKmw/exec';
+
+const $ = id => document.getElementById(id);
+const esc = v => String(v ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[c]));
+const today = () => new Date().toISOString().slice(0,10);
+
+function showLoading(v=true){ 
+  const el = $('loading');
+  if (el) el.classList.toggle('hidden', !v); 
+}
+
+function toast(msg){ 
+  const el = $('toast'); 
+  if (!el) { alert(msg); return; }
+  el.textContent = msg; 
+  el.classList.add('show'); 
+  setTimeout(() => el.classList.remove('show'), 2500); 
+}
+
+/**
+ * Universal WebApp Caller
+ * Mendukung google.script.run dan HTTP Fetch
+ */
+function call(action, ...args) {
+  return new Promise((resolve, reject) => {
+    // Mode 1: Lingkungan Google Apps Script Native (HTML Service)
+    if (typeof google !== 'undefined' && google.script && google.script.run) {
+      if (typeof google.script.run[action] !== 'function') {
+        reject(new Error(`Fungsi backend '${action}' tidak ditemukan!`));
+        return;
+      }
+      google.script.run
+        .withSuccessHandler(resolve)
+        .withFailureHandler(reject)
+        [action](...args);
+    } 
+    // Mode 2: Mode WebApp / API External via Fetch
+    else {
+      fetch(WEB_APP_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+        body: JSON.stringify({ action: action, args: args })
+      })
+      .then(async res => {
+        const text = await res.text();
+        try {
+          return JSON.parse(text);
+        } catch(e) {
+          throw new Error('Respon server bukan JSON: ' + text.slice(0, 100));
+        }
+      })
+      .then(res => {
+        if (res.error) reject(new Error(res.error));
+        else resolve(res.result !== undefined ? res.result : res);
+      })
+      .catch(err => reject(err));
+    }
+  });
+}
+
+function openModal(title, body){ 
+  $('modalTitle').textContent = title; 
+  $('modalBody').innerHTML = body; 
+  $('modal').classList.remove('hidden'); 
+}
+
+function closeModal(){ 
+  $('modal').classList.add('hidden'); 
+  state.editing = null; 
+}
+
+function role(){ return state.user?.ROLE || ''; }
+function isAdmin(){ return role() === 'ADMIN'; }
+function isTeacher(){ return ['GURU','WALI_KELAS','ADMIN'].includes(role()); }
+
+document.addEventListener('DOMContentLoaded', ()=>{
+  if ($('loginForm'))$('loginForm').addEventListener('submit', login);
+  if ($('modalClose'))$('modalClose').onclick = closeModal;
+  if ($('modal')) $('modal').addEventListener('click', e => { if(e.target ===$('modal')) closeModal(); });
+  if ($('logoutBtn'))$('logoutBtn').onclick = () => { state.user=null; $('mainView').classList.add('hidden');$('loginView').classList.remove('hidden'); };
+  if ($('menuBtn'))$('menuBtn').onclick = () => toggleSidebar();
+  document.querySelectorAll('[data-page]').forEach(b => b.addEventListener('click', () => navigate(b.dataset.page)));
+});
+
+async function login(e){
+  e.preventDefault();
+  showLoading(true);
+  try {
+    const r = await call('authenticate', $('loginUsername').value, $('loginPassword').value);
+    if(!r.ok){ toast(r.message || 'Login gagal'); return; }
+    state.user = r.user;
+    $('loginView').classList.add('hidden');$('mainView').classList.remove('hidden');
+    if ($('userBadge'))$('userBadge').textContent = (r.user.NAMA || r.user.USERNAME) + ' · ' + r.user.ROLE;
+    document.querySelectorAll('.admin-only').forEach(el => el.classList.toggle('hidden', !isAdmin()));
+    await loadAll();
+    navigate('dashboard');
+  } catch(err) {
+    toast('Gagal Login: ' + err.message);
+  } finally {
+    showLoading(false);
+  }
+}
+
+async function loadAll(){
+  state.data = await call('getAllData') || {};
+  state.dashboard = await call('getDashboard') || {};
+}
+
+async function refresh(){
+  showLoading(true);
+  try {
+    await loadAll();
+    renderPage();
+  } catch(err) {
+    toast('Gagal memuat data: ' + err.message);
+  } finally {
+    showLoading(false);
+  }
+}
+
+function navigate(page){
+  if(!isAdmin() && ['guru','kelas','mapel','pengaturan'].includes(page)){ toast('Menu hanya untuk Admin.'); return; }
+  state.page = page;
+  document.querySelectorAll('.nav-item,.bottom-nav button').forEach(b => b.classList.toggle('active', b.dataset.page === page));
+  toggleSidebar(false);
+  renderPage();
+}
+
+function renderPage(){
+  const titles = { dashboard:'Dashboard', guru:'Data Guru', kelas:'Data Kelas', siswa:'Data Siswa', mapel:'Mata Pelajaran', jadwal:'Jadwal Mengajar', presensi:'Presensi Siswa', nilai:'Nilai Siswa', jurnal:'Jurnal Mengajar', catatan:'Catatan Siswa', laporan:'Laporan & Rekap', pengguna:'Data Pengguna', pengaturan:'Pengaturan Lembaga', spp:'Pembayaran SPP', kartuSpp:'Kartu SPP Siswa' };
+  if ($('pageTitle'))$('pageTitle').textContent = titles[state.page] || 'Dashboard';
+  const fn = { dashboard:renderDashboard, guru:()=>renderCrud('GURU'), kelas:()=>renderCrud('KELAS'), siswa:renderSiswa, mapel:()=>renderCrud('MAPEL'), jadwal:()=>renderCrud('JADWAL'), presensi:renderPresensi, nilai:()=>renderCrud('NILAI'), jurnal:()=>renderCrud('JURNAL'), catatan:()=>renderCrud('CATATAN_SISWA'), pengguna:()=>renderCrud('PENGGUNA'), laporan:renderLaporan, pengaturan:renderPengaturan, spp:renderSppPage, kartuSpp:renderKartuSpp };
+  if(fn[state.page]) fn[state.page]();
+}
+
+function renderDashboard(){
+  const d = state.dashboard || {};
+  const s = d.settings || {};
+  $('content').innerHTML = `
+  <div class="page-head"><div><h2>Assalamu'alaikum 👋</h2><div class="muted">${esc(state.user?.NAMA||'Pengguna')} · ${esc(state.user?.ROLE||'')}</div></div></div>
+  <div class="card"><h3>${esc(s.NAMA_LEMBAGA||'Lembaga Anda')}</h3><div class="muted">${esc(s.ALAMAT||'Silakan lengkapi pengaturan lembaga.')}</div></div>
+  <div class="stats">
+    ${stat('👨‍🏫',d.guru,'Guru')}${stat('🏫',d.kelas,'Kelas')}${stat('👨‍🎓',d.siswa,'Siswa')}${stat('📚',d.mapel,'Mata Pelajaran')}
+    ${stat('📅',d.jadwal,'Jadwal')}${stat('🟢',d.presensiHariIni,'Presensi Hari Ini')}${stat('✅',d.hadirHariIni,'Hadir Hari Ini')}${stat('📝',d.jurnalHariIni,'Jurnal Hari Ini')}
+  </div>
+  <div class="card"><h3>Akses Cepat</h3><div class="quick-grid">
+   <button class="quick" onclick="navigate('presensi')">🟢<strong>Input Presensi</strong><span class="kpi-note">Absensi siswa per kelas</span></button>
+   <button class="quick" onclick="navigate('nilai')">📊<strong>Input Nilai</strong><span class="kpi-note">Nilai tugas dan ujian</span></button>
+   <button class="quick" onclick="navigate('jurnal')">📝<strong>Buat Jurnal</strong><span class="kpi-note">Catatan kegiatan mengajar</span></button>
+   <button class="quick" onclick="navigate('laporan')">📑<strong>Laporan</strong><span class="kpi-note">Rekap dan cetak</span></button>
+  </div></div>`;
+}
+
+function stat(icon,num,label){ return `<div class="stat"><div class="icon">${icon}</div><div class="num">${num||0}</div><div class="label">${label}</div></div>`; }
+
+const labels = {
+  PENGGUNA: ['USERNAME', 'PASSWORD', 'NAMA', 'ROLE', 'GURU_ID', 'STATUS'],
+  GURU: ['NIP_NIK','NAMA','JK','TEMPAT_LAHIR','TGL_LAHIR','ALAMAT','NO_HP','MAPEL_UTAMA','JABATAN','STATUS'],
+  KELAS: ['NAMA_KELAS','TINGKAT','WALI_GURU_ID','TAHUN_PELAJARAN','STATUS'],
+  SISWA: ['NIS','NISN','NAMA','JK','TEMPAT_LAHIR','TGL_LAHIR','NIK','NAMA_AYAH','NAMA_IBU','NO_HP_ORANG_TUA','ALAMAT','KELAS_ID','STATUS'],
+  MAPEL: ['KODE','NAMA_MAPEL','KKM','STATUS'],
+  JADWAL: ['HARI','JAM_MULAI','JAM_SELESAI','KELAS_ID','MAPEL_ID','GURU_ID','RUANG','TAHUN_PELAJARAN','SEMESTER','STATUS'],
+  NILAI: ['TANGGAL','SISWA_ID','KELAS_ID','MAPEL_ID','GURU_ID','JENIS','NILAI','KETERANGAN'],
+  JURNAL: ['TANGGAL','KELAS_ID','MAPEL_ID','GURU_ID','MATERI','KEGIATAN','KEHADIRAN','CATATAN'],
+  CATATAN_SISWA: ['TANGGAL','SISWA_ID','KELAS_ID','GURU_ID','KATEGORI','CATATAN','TINDAK_LANJUT'],
+  PEMBAYARAN_SPP: ['TANGGAL', 'SISWA_ID', 'KELAS_ID', 'BULAN', 'TAHUN', 'NOMINAL', 'STATUS', 'CATATAN', 'PETUGAS_ID']
+};
+
+function pretty(k){ return String(k).replaceAll('_',' ').toLowerCase().replace(/\b\w/g,x=>x.toUpperCase()); }
+
+function renderCrud(sheet){
+  const rows = state.data[sheet] || [], cols = labels[sheet] || [];
+  $('content').innerHTML = `
+   <div class="page-head"><div><h2>${pretty(sheet)}</h2><div class="muted">${rows.length} data</div></div>
+   <div class="actions"><button class="btn primary" onclick="openForm('${sheet}')">＋ Tambah</button>
+   ${sheet==='SISWA'?'<button class="btn secondary" onclick="openImport()">📥 Import CSV</button>':''}</div></div>
+   <div class="card"><div class="table-wrap"><table class="data-table"><thead><tr>${cols.map(c=>`<th>${pretty(c)}</th>`).join('')}<th>Aksi</th></tr></thead>
+   <tbody>${rows.map(r=>`<tr>${cols.map(c=>`<td>${esc(r[c])}</td>`).join('')}<td class="table-actions"><button class="btn secondary" onclick="openForm('${sheet}','${esc(r.ID)}')">Edit</button><button class="btn danger" onclick="removeRow('${sheet}','${esc(r.ID)}')">Hapus</button></td></tr>`).join('')}</tbody></table></div></div>`;
+}
+
+function fieldHtml(sheet,k,val=''){
+  if(k==='STATUS') return `<label>${pretty(k)}<select name="${k}"><option ${val==='AKTIF'?'selected':''}>AKTIF</option><option ${val==='NONAKTIF'?'selected':''}>NONAKTIF</option></select></label>`;
+  if(k==='JK') return `<label>${pretty(k)}<select name="${k}"><option value="">-</option><option ${val==='L'?'selected':''}>L</option><option ${val==='P'?'selected':''}>P</option></select></label>`;
+  if(k==='WALI_GURU_ID'||k==='GURU_ID') {
+    return `<label>${pretty(k)}<select name="${k}"><option value="">- Pilih -</option>${(state.data.GURU||[]).map(x=>`<option value="${esc(x.ID)}" ${val===x.ID?'selected':''}>${esc(x.NAMA)}</option>`).join('')}</select></label>`;
+  }
+  if(k==='KELAS_ID') return `<label>${pretty(k)}<select name="${k}"><option value="">- Pilih -</option>${(state.data.KELAS||[]).map(x=>`<option value="${esc(x.ID)}" ${val===x.ID?'selected':''}>${esc(x.NAMA_KELAS)}</option>`).join('')}</select></label>`;
+  if(k==='MAPEL_ID') return `<label>${pretty(k)}<select name="${k}"><option value="">- Pilih -</option>${(state.data.MAPEL||[]).map(x=>`<option value="${esc(x.ID)}" ${val===x.ID?'selected':''}>${esc(x.NAMA_MAPEL)}</option>`).join('')}</select></label>`;
+  if(k==='SISWA_ID') return `<label>${pretty(k)}<select name="${k}"><option value="">- Pilih -</option>${(state.data.SISWA||[]).map(x=>`<option value="${esc(x.ID)}" ${val===x.ID?'selected':''}>${esc(x.NAMA)}</option>`).join('')}</select></label>`;
+  if(k==='TANGGAL'||k==='TGL_LAHIR') return `<label>${pretty(k)}<input type="date" name="${k}" value="${esc(String(val).slice(0,10))}"></label>`;
+  if(k==='KEGIATAN'||k==='CATATAN'||k==='KETERANGAN'||k==='ALAMAT'||k==='TINDAK_LANJUT') return `<label class="full-col">${pretty(k)}<textarea name="${k}">${esc(val)}</textarea></label>`;
+  return `<label>${pretty(k)}<input name="${k}" value="${esc(val)}"></label>`;
+}
+
+function openForm(sheet, rowOrId = {}) {
+  let row = {};
+  if (typeof rowOrId === 'string') {
+    row = (state.data[sheet] || []).find(x => String(x.ID) === String(rowOrId)) || {};
+  } else {
+    row = rowOrId || {};
+  }
+  
+  const cols = labels[sheet] || [];
+  openModal((row.ID ? 'Edit ' : 'Tambah ') + pretty(sheet), `<form id="recordForm"><div class="form-grid">${cols.map(k=>fieldHtml(sheet,k,row[k]??(k==='TANGGAL'?today():''))).join('')}</div><div class="form-actions"><button type="button" class="btn secondary" onclick="closeModal()">Batal</button><button class="btn primary">Simpan</button></div></form>`);
+  
+  $('recordForm').onsubmit = async e => {
+    e.preventDefault();
+    const fd = new FormData(e.target), data = { ID: row.ID || '' };
+    fd.forEach((v, k) => data[k] = v);
+    showLoading(true);
+    try {
+      await call('apiSave', sheet, data, state.user.USERNAME);
+      toast('Data berhasil disimpan.');
+      closeModal();
+      await refresh();
+    } catch(err) {
+      toast('Gagal menyimpan: ' + err.message);
+    } finally {
+      showLoading(false);
+    }
+  };
+}
+
+async function removeRow(sheet, id){
+  if(!confirm('Hapus data ini?')) return;
+  showLoading(true);
+  try {
+    await call('apiDelete', sheet, id, state.user.USERNAME);
+    toast('Data dihapus.');
+    await refresh();
+  } catch(err) {
+    toast('Gagal menghapus: ' + err.message);
+  } finally {
+    showLoading(false);
+  }
+}
+
+let siswaSearchQuery = '';
+let siswaSelectedKelas = '';
+
+function renderSiswa() {
+  const allSiswa = state.data.SISWA || [];
+  const listKelas = state.data.KELAS || [];
+
+  const optionsKelas = listKelas.map(k => `
+    <option value="${esc(k.ID)}" ${siswaSelectedKelas === String(k.ID) ? 'selected' : ''}>
+      ${esc(k.NAMA_KELAS || k.NAMA || k.ID)}
+    </option>
+  `).join('');
+
+  $('content').innerHTML = `
+    <div class="page-head">
+      <div>
+        <h2>Siswa</h2>
+        <div class="muted" id="siswaCountText">${allSiswa.length} data</div>
+      </div>
+      <div class="actions" style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
+        <select id="filterKelasSiswa" onchange="onKelasSiswaChange(this.value)" style="padding: 8px 12px; font-size: 13px; border-radius: 8px;">
+          <option value="">Semua Kelas</option>
+          ${optionsKelas}
+        </select>
+        <input type="text" id="searchSiswaInput" placeholder="🔍 Cari NIS, Nama..." value="${esc(siswaSearchQuery)}" oninput="onSearchSiswaChange(this.value)" style="width: 200px; padding: 8px 12px; font-size: 13px;">
+        <button class="btn primary" onclick="openCrudModal('SISWA')">+ Tambah</button>
+        <button class="btn secondary" onclick="openImport()">📥 Import CSV</button>
+      </div>
+    </div>
+    <div class="card">
+      <div class="table-responsive">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Nis</th><th>Nisn</th><th>Nama</th><th>Jk</th><th>Tempat Lahir</th><th>Tgl Lahir</th><th>Nik</th><th>Nama Ayah</th><th>Nama Ibu</th><th>Kelas</th><th>Aksi</th>
+            </tr>
+          </thead>
+          <tbody id="tbodySiswa"></tbody>
+        </table>
+      </div>
+    </div>`;
+
+  filterSiswaTable();
+}
+
+function filterSiswaTable() {
+  const allSiswa = state.data.SISWA || [];
+  const listKelas = state.data.KELAS || [];
+  const keyword = (siswaSearchQuery || '').toLowerCase().trim();
+
+  const kelasMap = {};
+  listKelas.forEach(k => { kelasMap[String(k.ID)] = k.NAMA_KELAS || k.NAMA || k.ID; });
+
+  const filtered = allSiswa.filter(s => {
+    if (siswaSelectedKelas && String(s.KELAS_ID || s.KELAS || '') !== siswaSelectedKelas) return false;
+    if (!keyword) return true;
+    const nama = (s.NAMA || '').toLowerCase();
+    const nis = (s.NIS || '').toString().toLowerCase();
+    const nisn = (s.NISN || '').toString().toLowerCase();
+    const nik = (s.NIK || '').toString().toLowerCase();
+    return nama.includes(keyword) || nis.includes(keyword) || nisn.includes(keyword) || nik.includes(keyword);
+  });
+
+  const countText = $('siswaCountText');
+  if (countText) countText.innerText = `${filtered.length} data`;
+
+  const rowsHtml = filtered.map(s => {
+    const rawKelasId = String(s.KELAS_ID || s.KELAS || '');
+    const namaKelasDisplay = kelasMap[rawKelasId] || rawKelasId || '-';
+
+    return `
+      <tr>
+        <td>${esc(s.NIS || '-')}</td>
+        <td>${esc(s.NISN || '-')}</td>
+        <td>
+          <div style="font-weight: 600; margin-bottom: 4px;">${esc(s.NAMA || '-')}</div>
+        </td>
+        <td>${esc(s.JK || '-')}</td>
+        <td>${esc(s.TEMPAT_LAHIR || '-')}</td>
+        <td>${formatDateOnly(s.TGL_LAHIR)}</td>
+        <td>${esc(s.NIK || '-')}</td>
+        <td>${esc(s.NAMA_AYAH || '-')}</td>
+        <td>${esc(s.NAMA_IBU || '-')}</td>
+        <td><span class="badge info">${esc(namaKelasDisplay)}</span></td>
+        <td>
+          <div style="display: flex; gap: 4px; align-items: center;">
+            <button class="btn secondary" style="padding:2px 6px; font-size:10px;" onclick="openCrudModal('SISWA', '${esc(s.ID)}')">Edit</button>
+            <button class="btn danger" style="padding:2px 6px; font-size:10px;" onclick="removeRow('SISWA', '${esc(s.ID)}')">Hapus</button>
+            <button class="btn primary" style="padding:2px 6px; font-size:10px; background-color: #0284c7;" onclick="showQrCodeSiswa('${esc(s.ID)}')">QR</button>
+          </div>
+        </td>
+      </tr>`;
+  }).join('');
+
+  const tbody = $('tbodySiswa');
+  if (tbody) tbody.innerHTML = rowsHtml || '<tr><td colspan="11" style="text-align:center; padding:20px;" class="muted">Data siswa tidak ditemukan.</td></tr>';
+}
+
+function onKelasSiswaChange(val) { siswaSelectedKelas = val; filterSiswaTable(); }
+function onSearchSiswaChange(val) { siswaSearchQuery = val; filterSiswaTable(); }
+
+function showQrCodeSiswa(siswaId) {
+  const siswa = (state.data.SISWA || []).find(s => String(s.ID) === String(siswaId));
+  if (!siswa) return alert('Data siswa tidak ditemukan');
+
+  if (typeof QRCode === 'undefined') {
+    return alert('Library QRCode belum siap/gagal dimuat.');
+  }
+
+  const listKelas = state.data.KELAS || [];
+  const kelasObj = listKelas.find(k => String(k.ID) === String(siswa.KELAS_ID || siswa.KELAS));
+  const namaKelas = kelasObj ? (kelasObj.NAMA_KELAS || kelasObj.NAMA) : '-';
+
+  const contentHtml = `
+    <style>
+      .id-card-container { display: flex; flex-direction: column; align-items: center; gap: 15px; }
+      .id-card { width: 320px; height: 200px; border-radius: 12px; background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); color: #ffffff; box-shadow: 0 4px 15px rgba(0,0,0,0.15); position: relative; overflow: hidden; box-sizing: border-box; padding: 12px; font-family: Arial, sans-serif; border: 1px solid #334155; }
+      .id-card-header { text-align: center; border-bottom: 2px solid #0ea5e9; padding-bottom: 6px; margin-bottom: 8px; }
+      .id-card-header h4 { margin: 0; font-size: 13px; letter-spacing: 1px; color: #38bdf8; text-transform: uppercase; }
+      .id-card-header p { margin: 2px 0 0 0; font-size: 10px; color: #94a3b8; }
+      .id-card-body { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+      .id-card-info { flex: 1; font-size: 11px; }
+      .id-card-info .label { font-size: 9px; color: #94a3b8; margin-top: 4px; text-transform: uppercase; }
+      .id-card-info .value { font-weight: bold; color: #f8fafc; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 170px; }
+      .id-card-qr { background: #ffffff; padding: 6px; border-radius: 8px; display: flex; align-items: center; justify-content: center; }
+    </style>
+
+    <div class="id-card-container">
+      <div class="id-card">
+        <div class="id-card-header">
+          <h4>KARTU PRESENSI SISWA</h4>
+          <p>MySIB Academic System</p>
+        </div>
+        <div class="id-card-body">
+          <div class="id-card-info">
+            <div class="label">Nama Siswa</div>
+            <div class="value">${esc(siswa.NAMA)}</div>
+            <div style="display: flex; gap: 10px;">
+              <div>
+                <div class="label">NIS</div>
+                <div class="value" style="font-size: 10px;">${esc(siswa.NIS || '-')}</div>
+              </div>
+              <div>
+                <div class="label">Kelas</div>
+                <div class="value" style="font-size: 10px;">${esc(namaKelas)}</div>
+              </div>
+            </div>
+            <div class="label">NISN</div>
+            <div class="value" style="font-size: 10px;">${esc(siswa.NISN || '-')}</div>
+          </div>
+          <div class="id-card-qr">
+            <div id="qrcodeCardCanvas"></div>
+          </div>
+        </div>
+      </div>
+      <div class="no-print" style="display: flex; gap: 8px;">
+        <button class="btn primary" onclick="window.print()">🖨️ Cetak ID Card</button>
+        <button class="btn secondary" onclick="closeModal()">Tutup</button>
+      </div>
+    </div>`;
+
+  openModal('KARTU QR SISWA', contentHtml);
+
+  setTimeout(() => {
+    const qrContainer = document.getElementById('qrcodeCardCanvas');
+    if (qrContainer) {
+      qrContainer.innerHTML = '';
+      new QRCode(qrContainer, {
+        text: String(siswa.ID),
+        width: 80,
+        height: 80,
+        colorDark: "#000000",
+        colorLight: "#ffffff",
+        correctLevel: QRCode.CorrectLevel.H
+      });
+    }
+  }, 100);
+}
+
+function openCrudModal(sheet, id = null) {
+  state.editing = { sheet, id };
+  const item = id ? (state.data[sheet] || []).find(x => String(x.ID) === String(id)) : {};
+
+  if (sheet === 'SISWA') {
+    const listKelas = (state.data.KELAS || []).map(k => {
+      const kId = k.ID || k.KELAS_ID || '';
+      const kNama = k.NAMA_KELAS || k.NAMA || kId;
+      const isSelected = String(item?.KELAS_ID || item?.KELAS || '') === String(kId) ? 'selected' : '';
+      return `<option value="${esc(kId)}" ${isSelected}>${esc(kNama)}</option>`;
+    }).join('');
+
+    const html = `
+      <form onsubmit="saveCrud(event)">
+        <input type="hidden" id="field_ID" value="${esc(item?.ID || '')}">
+        <div style="margin-bottom:10px;"><label>NIS</label><input type="text" id="field_NIS" value="${esc(item?.NIS || '')}" class="input"></div>
+        <div style="margin-bottom:10px;"><label>NISN</label><input type="text" id="field_NISN" value="${esc(item?.NISN || '')}" class="input"></div>
+        <div style="margin-bottom:10px;"><label>Nama Siswa</label><input type="text" id="field_NAMA" value="${esc(item?.NAMA || '')}" required class="input"></div>
+        <div style="margin-bottom:10px;"><label>Jenis Kelamin</label><select id="field_JK" class="input"><option value="L" ${item?.JK === 'L' ? 'selected' : ''}>Laki-laki (L)</option><option value="P" ${item?.JK === 'P' ? 'selected' : ''}>Perempuan (P)</option></select></div>
+        <div style="margin-bottom:10px;"><label>Tempat Lahir</label><input type="text" id="field_TEMPAT_LAHIR" value="${esc(item?.TEMPAT_LAHIR || '')}" class="input"></div>
+        <div style="margin-bottom:10px;"><label>Tanggal Lahir</label><input type="date" id="field_TGL_LAHIR" value="${item?.TGL_LAHIR ? item.TGL_LAHIR.split('T')[0] : ''}" class="input"></div>
+        <div style="margin-bottom:10px;"><label>NIK</label><input type="text" id="field_NIK" value="${esc(item?.NIK || '')}" class="input"></div>
+        <div style="margin-bottom:10px;"><label>Nama Ayah</label><input type="text" id="field_NAMA_AYAH" value="${esc(item?.NAMA_AYAH || '')}" class="input"></div>
+        <div style="margin-bottom:10px;"><label>Nama Ibu</label><input type="text" id="field_NAMA_IBU" value="${esc(item?.NAMA_IBU || '')}" class="input"></div>
+        <div style="margin-bottom:10px;"><label>No HP Orang Tua</label><input type="text" id="field_NO_HP_ORANG_TUA" value="${esc(item?.NO_HP_ORANG_TUA || item?.NO_HP_ORTU || '')}" class="input"></div>
+        <div style="margin-bottom:10px;"><label>Alamat</label><input type="text" id="field_ALAMAT" value="${esc(item?.ALAMAT || '')}" class="input"></div>
+        <div style="margin-bottom:10px;"><label>Kelas</label><select id="field_KELAS_ID" required class="input"><option value="">-- Pilih Kelas --</option>${listKelas}</select></div>
+        <div style="margin-bottom:10px;"><label>Status</label><select id="field_STATUS" class="input"><option value="AKTIF" ${item?.STATUS !== 'NONAKTIF' ? 'selected' : ''}>AKTIF</option><option value="NONAKTIF" ${item?.STATUS === 'NONAKTIF' ? 'selected' : ''}>NONAKTIF</option></select></div>
+        <div class="form-actions" style="display:flex; justify-content:flex-end; gap:8px; margin-top:15px;"><button class="btn" type="button" onclick="closeModal()">Batal</button><button class="btn primary" type="submit">Simpan Siswa</button></div>
+      </form>`;
+    openModal(id ? 'Edit Data Siswa' : 'Tambah Data Siswa', html);
+    return;
+  }
+
+  openForm(sheet, id);
+}
+
+async function saveCrud(event) {
+  if (event) event.preventDefault();
+
+  const sheet = state.editing?.sheet;
+  const id = state.editing?.id;
+
+  if (!sheet) { toast('Gagal: Sheet tidak teridentifikasi.'); return; }
+
+  const inputs = document.querySelectorAll('[id^="field_"]');
+  const record = {};
+  inputs.forEach(el => {
+    const key = el.id.replace('field_', '');
+    record[key] = el.value;
+  });
+
+  record.ID = id ? id : (sheet + '_' + Date.now());
+
+  try {
+    showLoading(true);
+    await call('apiSave', sheet, record, state.user.USERNAME);
+    toast('Data berhasil disimpan!');
+    closeModal();
+    await refresh();
+  } catch (err) {
+    toast('Gagal menyimpan: ' + err.message);
+  } finally {
+    showLoading(false);
+  }
+}
+
+function formatDateOnly(dateStr) {
+  if (!dateStr) return '-';
+  if (typeof dateStr === 'string') {
+    if (dateStr.includes('T')) return dateStr.split('T')[0];
+    if (dateStr.includes(' ')) return dateStr.split(' ')[0];
+  }
+  return dateStr;
+}
+
+function toggleSidebar(show) {
+  const sidebar = document.querySelector('.sidebar');
+  if (!sidebar) return;
+  if (typeof show === 'boolean') {
+    sidebar.classList.toggle('open', show);
+  } else {
+    sidebar.classList.toggle('open');
+  }
+}
+
+// ==========================================
+// MODUL PRESENSI SISWA
+// ==========================================
+function renderPresensi() {
+  $('content').innerHTML = `
+    <div class="page-head">
+      <div>
+        <h2>Presensi Siswa</h2>
+        <div class="muted">Input cepat presensi per kelas</div>
+      </div>
+      <button type="button" class="btn" onclick="cetakPdfPresensi()">🖨️ Cetak PDF Presensi</button>
+    </div>
+    <div class="card">
+      <div class="form-grid">
+        <label>Tanggal
+          <input id="prsDate" type="date" value="${today()}">
+        </label>
+        <label>Kelas
+          <select id="prsKelas">
+            <option value="">-- Pilih Kelas --</option>
+            ${(state.data.KELAS || []).map(k => `<option value="${esc(k.ID)}">${esc(k.NAMA_KELAS || k.NAMA)}</option>`).join('')}
+          </select>
+        </label>
+        <label>Mata Pelajaran
+          <select id="prsMapel">
+            <option value="">-- Pilih Mapel --</option>
+            ${(state.data.MAPEL || []).map(m => `<option value="${esc(m.ID)}">${esc(m.NAMA_MAPEL || m.NAMA)}</option>`).join('')}
+          </select>
+        </label>
+      </div>
+      <div id="attendanceBox" style="margin-top:18px"></div>
+    </div>`;
+
+  $('prsKelas').onchange = renderAttendanceRows;
+  $('prsMapel').onchange = renderAttendanceRows;
+  $('prsDate').onchange = renderAttendanceRows;
+}
+
+function renderAttendanceRows() {
+  const kid = $('prsKelas').value;
+  const date = $('prsDate').value;
+  const mapel = $('prsMapel').value;
+  const box = $('attendanceBox');
+
+  if (!kid) {
+    box.innerHTML = '<p class="muted">Silakan pilih kelas terlebih dahulu untuk menampilkan daftar siswa.</p>';
+    return;
+  }
+
+  const students = (state.data.SISWA || []).filter(s => 
+    String(s.KELAS_ID || s.KELAS) === String(kid) && String(s.STATUS || 'AKTIF').toUpperCase() !== 'NONAKTIF'
+  );
+
+  if (!students.length) {
+    box.innerHTML = '<p class="muted">Tidak ada siswa aktif ditemukan di kelas ini.</p>';
+    return;
+  }
+
+  const old = state.data.PRESENSI || [];
+
+  box.innerHTML = `
+    <div class="actions" style="margin-bottom:12px; display:flex; justify-content:space-between; align-items:center;">
+      <button class="btn secondary" onclick="setAllAttendance('HADIR')">✅ Set Hadir Semua</button>
+      <button class="btn primary" onclick="saveAttendance()">💾 Simpan Presensi</button>
+    </div>
+    <div class="table-responsive">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th width="50">No</th>
+            <th>NIS</th>
+            <th>Nama Siswa</th>
+            <th width="150">Status</th>
+            <th>Keterangan</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${students.map((s, i) => {
+            const ex = old.find(p => 
+              String(p.SISWA_ID) === String(s.ID) && 
+              String(p.KELAS_ID) === String(kid) && 
+              (!mapel || String(p.MAPEL_ID) === String(mapel)) && 
+              String(p.TANGGAL).slice(0, 10) === date
+            );
+            const status = ex ? ex.STATUS : 'HADIR';
+            return `
+              <tr>
+                <td>${i + 1}</td>
+                <td>${esc(s.NIS || '-')}</td>
+                <td><strong>${esc(s.NAMA)}</strong></td>
+                <td>
+                  <select class="att-status input" data-sid="${s.ID}">
+                    <option value="HADIR" ${status === 'HADIR' ? 'selected' : ''}>HADIR</option>
+                    <option value="SAKIT" ${status === 'SAKIT' ? 'selected' : ''}>SAKIT</option>
+                    <option value="IZIN" ${status === 'IZIN' ? 'selected' : ''}>IZIN</option>
+                    <option value="ALPA" ${status === 'ALPA' ? 'selected' : ''}>ALPA</option>
+                  </select>
+                </td>
+                <td>
+                  <input class="att-ket input" data-sid="${s.ID}" value="${esc(ex?.KETERANGAN || '')}" placeholder="Catatan opsional">
+                </td>
+              </tr>
+            `;
+          }).join('')}
+        </tbody>
+      </table>
+    </div>`;
+}
+
+function setAllAttendance(status) {
+  document.querySelectorAll('.att-status').forEach(x => x.value = status);
+}
+
+async function saveAttendance() {
+  const kid = $('prsKelas').value;
+  const date = $('prsDate').value;
+  const mapel = $('prsMapel').value;
+
+  if (!kid || !date) {
+    toast('Pilih tanggal dan kelas terlebih dahulu.');
+    return;
+  }
+
+  const records = [...document.querySelectorAll('.att-status')].map(sel => ({
+    TANGGAL: date,
+    KELAS_ID: kid,
+    SISWA_ID: sel.dataset.sid,
+    MAPEL_ID: mapel,
+    GURU_ID: state.user?.GURU_ID || '',
+    STATUS: sel.value,
+    KETERANGAN: document.querySelector(`.att-ket[data-sid="${sel.dataset.sid}"]`)?.value || ''
+  }));
+
+  try {
+    showLoading(true);
+    await call('saveBulkAttendance', records, state.user.USERNAME);
+    toast('Presensi berhasil disimpan.');
+    await refresh();
+    renderPresensi();
+    $('prsKelas').value = kid;
+    $('prsMapel').value = mapel;
+    $('prsDate').value = date;
+    renderAttendanceRows();
+  } catch (err) {
+    toast('Gagal menyimpan presensi: ' + err.message);
+  } finally {
+    showLoading(false);
+  }
+}
+
+function cetakPdfPresensi() {
+  window.print();
+}
+
+// ==========================================
+// MODUL LAPORAN & REKAP (LENGKAP & AKTIF)
+// ==========================================
+function renderLaporan() {
+  $('content').innerHTML = `
+    <!-- Container Khusus Cetak PDF Laporan -->
+    <div id="printArea"></div>
+
+    <div class="page-head no-print">
+      <div>
+        <h2>Laporan & Rekap</h2>
+        <div class="muted">Ekspor data ke PDF atau Excel secara terstruktur</div>
+      </div>
+    </div>
+    <div class="card no-print">
+      <div class="form-grid">
+        <label>Jenis Laporan
+          <select id="repSheet">
+            <option value="PRESENSI">Presensi Siswa</option>
+            <option value="PEMBAYARAN_SPP">Pembayaran SPP</option>
+            <option value="NILAI">Nilai Siswa</option>
+            <option value="JURNAL">Jurnal Mengajar</option>
+            <option value="CATATAN_SISWA">Catatan Siswa</option>
+            <option value="SISWA">Data Master Siswa</option>
+            <option value="GURU">Data Master Guru</option>
+          </select>
+        </label>
+        <label>Filter Kelas
+          <select id="repKelas">
+            <option value="">-- Semua Kelas --</option>
+            ${(state.data.KELAS || []).map(k => `<option value="${esc(k.ID)}">${esc(k.NAMA_KELAS || k.NAMA)}</option>`).join('')}
+          </select>
+        </label>
+        <label>Tanggal Mulai
+          <input id="repStart" type="date">
+        </label>
+        <label>Tanggal Akhir
+          <input id="repEnd" type="date">
+        </label>
+      </div>
+      <div class="actions" style="margin-top:18px; display:flex; gap:10px;">
+        <button class="btn primary" onclick="downloadReport('pdf')">📄 Unduh / Cetak PDF</button>
+        <button class="btn secondary" style="background-color: #15803d; color: white;" onclick="downloadReport('excel')">📊 Unduh Excel</button>
+      </div>
+    </div>
+    <div id="reportPreview" class="card no-print">
+      <h3>Petunjuk Ekspor</h3>
+      <p class="muted">Pilih jenis laporan yang diinginkan. Anda dapat mempersempit data dengan memilih kelas dan rentang tanggal sebelum mencetak atau mengunduh.</p>
+    </div>`;
+}
+
+// Fungsi Filter Data Berdasarkan Form Laporan
+function getFilteredReportData() {
+  const sheet = $('repSheet').value;
+  const kelasId = $('repKelas').value;
+  const startDate = $('repStart').value;
+  const endDate = $('repEnd').value;
+
+  let rawData = state.data[sheet] || [];
+
+  // Filter Kelas jika dipilih
+  if (kelasId) {
+    rawData = rawData.filter(item => {
+      const itemKelas = String(item.KELAS_ID || item.KELAS || '');
+      return itemKelas === String(kelasId);
+    });
+  }
+
+  // Filter Rentang Tanggal jika diisi
+  if (startDate || endDate) {
+    rawData = rawData.filter(item => {
+      const itemDate = item.TANGGAL || item.TGL_LAHIR;
+      if (!itemDate) return true;
+      const tgl = String(itemDate).slice(0, 10);
+      if (startDate && tgl < startDate) return false;
+      if (endDate && tgl > endDate) return false;
+      return true;
+    });
+  }
+
+  return { sheet, rawData, kelasId, startDate, endDate };
+}
+
+// Handler Ekspor (PDF / EXCEL)
+function downloadReport(format) {
+  const { sheet, rawData } = getFilteredReportData();
+
+  if (!rawData || rawData.length === 0) {
+    toast('Tidak ada data yang cocok dengan filter untuk diekspor.');
+    return;
+  }
+
+  if (format === 'excel') {
+    exportToExcel(sheet, rawData);
+  } else if (format === 'pdf') {
+    exportToPdf(sheet, rawData);
+  }
+}
+
+// 1. DIVERSI EKSPOR EXCEL
+function exportToExcel(sheet, data) {
+  toast('Mengekspor data ke Excel...');
+
+  // Map Referensi Nama Relasi
+  const siswaMap = {}, kelasMap = {}, guruMap = {}, mapelMap = {};
+  (state.data.SISWA || []).forEach(s => siswaMap[String(s.ID)] = s.NAMA);
+  (state.data.KELAS || []).forEach(k => kelasMap[String(k.ID)] = k.NAMA_KELAS || k.NAMA);
+  (state.data.GURU || []).forEach(g => guruMap[String(g.ID)] = g.NAMA);
+  (state.data.MAPEL || []).forEach(m => mapelMap[String(m.ID)] = m.NAMA_MAPEL || m.NAMA);
+
+  // Formatting Data untuk Excel
+  const cleanData = data.map((row, index) => {
+    const item = { No: index + 1 };
+    
+    // Konversi ID referensi ke Nama
+    Object.keys(row).forEach(key => {
+      if (key === 'ID') return;
+      
+      let val = row[key];
+      if (key === 'SISWA_ID') val = siswaMap[String(val)] || val;
+      if (key === 'KELAS_ID' || key === 'KELAS') val = kelasMap[String(val)] || val;
+      if (key === 'GURU_ID') val = guruMap[String(val)] || val;
+      if (key === 'MAPEL_ID') val = mapelMap[String(val)] || val;
+      if (key === 'TANGGAL' || key === 'TGL_LAHIR') val = formatDateOnly(val);
+
+      item[pretty(key)] = val || '-';
+    });
+    return item;
+  });
+
+  if (typeof XLSX === 'undefined') {
+    toast('Error: Library XLSX belum dimuat. Pastikan terhubung ke internet.');
+    return;
+  }
+
+  const worksheet = XLSX.utils.json_to_sheet(cleanData);
+  const workbook = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(workbook, worksheet, pretty(sheet));
+
+  // Simpan File
+  const filename = `Laporan_${sheet}_${today()}.xlsx`;
+  XLSX.writeFile(workbook, filename);
+  toast('Ekspor Excel Berhasil!');
+}
+
+// 2. DIVERSI EKSPOR / PRINTER PDF
+// 2. DIVERSI EKSPOR / PRINTER PDF (TOTAL PER ANAK DALAM PERIODE & 1 HALAMAN)
+function exportToPdf(sheet, data) {
+  toast('Menyiapkan dokumen PDF...');
+
+  const settings = (state.data.PENGATURAN || [])[0] || {};
+  const printArea = $('printArea');
+  if (!printArea) return;
+
+  // 1. Ambil Nilai Filter Tanggal dari Input UI (repStart & repEnd)
+  const tglMulaiVal = $('repStart') ?$('repStart').value : '';
+  const tglSelesaiVal = $('repEnd') ?$('repEnd').value : '';
+
+  // Format Teks Periode Tanggal
+  let periodeTeks = 'Semua Periode';
+  if (tglMulaiVal && tglSelesaiVal) {
+    periodeTeks = `${formatDateOnly(tglMulaiVal)} s/d ${formatDateOnly(tglSelesaiVal)}`;
+  } else if (tglMulaiVal) {
+    periodeTeks = `Mulai ${formatDateOnly(tglMulaiVal)}`;
+  } else if (tglSelesaiVal) {
+    periodeTeks = `Sampai ${formatDateOnly(tglSelesaiVal)}`;
+  }
+
+  const rawData = Array.isArray(data) ? data : [];
+
+  // Mapping Data Siswa
+  const siswaMap = {};
+  (state.data.SISWA || []).forEach(s => {
+    siswaMap[String(s.ID)] = {
+      nis: s.NIS || s.NISN || '-',
+      nama: s.NAMA || '-'
+    };
+  });
+
+  // 2. AKUMULASI / TOTALKAN PER ANAK SELAMA PERIODE
+  const aggregatedSiswa = {};
+
+  rawData.forEach(row => {
+    const siswaId = String(row.SISWA_ID || row.ID_SISWA || row.NIS || row.NAMA);
+
+    if (!aggregatedSiswa[siswaId]) {
+      const info = siswaMap[siswaId] || {
+        nis: row.NIS || row.NISN || '-',
+        nama: row.NAMA || row.NAMA_SISWA || '-'
+      };
+      
+      aggregatedSiswa[siswaId] = {
+        nis: info.nis,
+        nama: info.nama,
+        hadir: 0,
+        sakit: 0,
+        izin: 0,
+        alpha: 0
+      };
+    }
+
+    // Ambil angka dari tiap baris log presensi
+    const h = Number(row.HADIR ?? row.H ?? (row.STATUS === 'HADIR' ? 1 : 0));
+    const s = Number(row.SAKIT ?? row.S ?? (row.STATUS === 'SAKIT' ? 1 : 0));
+    const i = Number(row.IZIN  ?? row.I ?? (row.STATUS === 'IZIN'  ? 1 : 0));
+    const a = Number(row.ALPA ?? row.A ?? (row.STATUS === 'ALPA' ? 1 : 0));
+
+    aggregatedSiswa[siswaId].hadir += h;
+    aggregatedSiswa[siswaId].sakit += s;
+    aggregatedSiswa[siswaId].izin  += i;
+    aggregatedSiswa[siswaId].alpha += a;
+  });
+
+  // Convert Object Agregasi ke Array List
+  const listRekapSiswa = Object.values(aggregatedSiswa);
+
+  // Variables Total Keseluruhan
+  let totalHadir = 0;
+  let totalSakit = 0;
+  let totalIzin = 0;
+  let totalAlpha = 0;
+
+  // Render Baris Tabel
+  const rowsHtml = listRekapSiswa.map((item, idx) => {
+    totalHadir += item.hadir;
+    totalSakit += item.sakit;
+    totalIzin  += item.izin;
+    totalAlpha += item.alpha;
+
+    return `
+      <tr>
+        <td class="text-center">${idx + 1}</td>
+        <td class="text-center font-semibold">${esc(item.nis)}</td>
+        <td class="text-left font-semibold">${esc(item.nama)}</td>
+        <td class="text-center">${item.hadir}</td>
+        <td class="text-center">${item.sakit}</td>
+        <td class="text-center">${item.izin}</td>
+        <td class="text-center">${item.alpha}</td>
+      </tr>
+    `;
+  }).join('');
+
+  printArea.style.display = 'block';
+  printArea.innerHTML = `
+    <style>
+      @media print {
+        @page { 
+          size: A4 portrait; 
+          margin: 8mm 10mm;
+        }
+        body { 
+          margin: 0; 
+          -webkit-print-color-adjust: exact !important; 
+          print-color-adjust: exact !important; 
+        }
+      }
+
+      .pdf-wrapper {
+        font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        color: #0f172a;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      .kop-container {
+        text-align: center;
+        border-bottom: 2px solid #0f172a;
+        padding-bottom: 6px;
+        margin-bottom: 10px;
+      }
+
+      .kop-details h2 {
+        font-size: 16px;
+        font-weight: 800;
+        margin: 0;
+        text-transform: uppercase;
+        color: #0f172a;
+      }
+
+      .kop-details p {
+        font-size: 10px;
+        margin: 2px 0 0 0;
+        color: #475569;
+      }
+
+      .doc-title {
+        text-align: center;
+        margin-bottom: 12px;
+      }
+
+      .doc-title h3 {
+        font-size: 13px;
+        font-weight: 700;
+        margin: 0;
+        text-transform: uppercase;
+        color: #1e293b;
+      }
+
+      .doc-title .meta-date {
+        font-size: 10px;
+        font-weight: 600;
+        color: #475569;
+        margin-top: 2px;
+      }
+
+      .report-table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 10px;
+        margin-bottom: 16px;
+      }
+
+      .report-table th {
+        background-color: #0f172a !important;
+        color: #ffffff !important;
+        font-weight: 600;
+        font-size: 9px;
+        text-transform: uppercase;
+        padding: 6px 4px;
+        border: 1px solid #0f172a;
+      }
+
+      .report-table td {
+        padding: 5px 6px;
+        border: 1px solid #cbd5e1;
+        color: #334155;
+      }
+
+      .report-table tbody tr:nth-child(even) {
+        background-color: #f8fafc !important;
+      }
+
+      .report-table tfoot td {
+        background-color: #f1f5f9 !important;
+        font-weight: bold;
+        color: #0f172a;
+        border-top: 2px solid #0f172a;
+      }
+
+      .text-center { text-align: center; }
+      .text-left { text-align: left; }
+      .font-semibold { font-weight: 600; color: #0f172a; }
+
+      .ttd-wrapper {
+        display: flex;
+        justify-content: space-between;
+        margin-top: 15px;
+        page-break-inside: avoid;
+        font-size: 10px;
+      }
+
+      .ttd-block {
+        width: 180px;
+        text-align: center;
+      }
+
+      .ttd-space {
+        height: 40px;
+      }
+
+      .ttd-name {
+        font-weight: 700;
+        text-decoration: underline;
+        color: #0f172a;
+      }
+    </style>
+
+    <div class="pdf-wrapper">
+      <div class="kop-container">
+        <div class="kop-details">
+          <h2>${esc(settings.NAMA_LEMBAGA || 'LEMBAGA PENDIDIKAN')}</h2>
+          <p>${esc(settings.ALAMAT || 'Jl. Pendidikan No. 123, Kota Bandung')}</p>
+        </div>
+      </div>
+
+      <div class="doc-title">
+        <h3>REKAPITULASI PRESENSI SISWA</h3>
+        <div class="meta-date">Periode: ${esc(periodeTeks)}</div>
+      </div>
+
+      <table class="report-table">
+        <thead>
+          <tr>
+            <th style="width: 5%; text-align: center;">NO</th>
+            <th style="width: 18%; text-align: center;">NIS</th>
+            <th style="width: 37%; text-align: left;">NAMA SISWA</th>
+            <th style="width: 10%; text-align: center;">TOTAL HADIR</th>
+            <th style="width: 10%; text-align: center;">TOTAL SAKIT</th>
+            <th style="width: 10%; text-align: center;">TOTAL IZIN</th>
+            <th style="width: 10%; text-align: center;">TOTAL ALPHA</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${listRekapSiswa.length === 0 ? `
+            <tr>
+              <td colspan="7" class="text-center" style="padding: 12px; color: #64748b;">
+                Tidak ada data presensi pada periode tanggal yang dipilih.
+              </td>
+            </tr>
+          ` : rowsHtml}
+        </tbody>
+        ${listRekapSiswa.length > 0 ? `
+        <tfoot>
+          <tr>
+            <td colspan="3" class="text-center">TOTAL KESELURUHAN</td>
+            <td class="text-center">${totalHadir}</td>
+            <td class="text-center">${totalSakit}</td>
+            <td class="text-center">${totalIzin}</td>
+            <td class="text-center">${totalAlpha}</td>
+          </tr>
+        </tfoot>
+        ` : ''}
+      </table>
+
+      <div class="ttd-wrapper">
+        <div class="ttd-block">
+          <div>Mengetahui,</div>
+          <div>Kepala Sekolah</div>
+          <div class="ttd-space"></div>
+          <div class="ttd-name">${esc(settings.KEPALA_SEKOLAH || '....................')}</div>
+        </div>
+        <div class="ttd-block">
+          <div>Bandung, ${new Date().toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}</div>
+          <div>Petugas / Admin</div>
+          <div class="ttd-space"></div>
+          <div class="ttd-name">${esc(state.user?.NAMA || state.user?.USERNAME || 'Administrator')}</div>
+        </div>
+      </div>
+    </div>
+  `;
+
+  window.print();
+
+  setTimeout(() => {
+    printArea.style.display = 'none';
+  }, 1000);
+}
+// ==========================================
+// MODUL PEMBAYARAN SPP
+// ==========================================
+// Variable state untuk filter SPP
+let sppFilterKelas = '';
+let sppFilterBulan = '';
+let sppFilterTahun = new Date().getFullYear().toString();
+
+function renderSppPage() {
+  const listKelas = state.data.KELAS || [];
+  const bulanList = ['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'];
+
+  $('content').innerHTML = `
+    <!-- Container Khusus Cetak -->
+    <div id="printArea"></div>
+
+    <!-- Tampilan Aplikasi -->
+    <div class="card no-print">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; flex-wrap: wrap; gap: 10px;">
+        <h3 style="margin: 0; font-size: 18px; font-weight: 700;">Data Pembayaran SPP</h3>
+        <div class="actions" style="display: flex; gap: 8px;">
+          <button class="btn primary" onclick="openForm('PEMBAYARAN_SPP')">＋ Input SPP</button>
+          <button class="btn primary" style="background-color: #0284c7;" onclick="cetakSppPdf()">🖨️ Cetak / Save PDF</button>
+        </div>
+      </div>
+
+      <div class="form-grid" style="grid-template-columns: repeat(3, 1fr); margin-bottom: 16px;">
+        <div>
+          <label style="font-weight: 600; margin-bottom: 4px; display: block;">Filter Kelas</label>
+          <select id="sppFilterKelasSelect" onchange="onSppFilterChange()" class="input">
+            <option value="">-- Semua Kelas --</option>
+            ${listKelas.map(k => `<option value="${esc(k.ID)}" ${sppFilterKelas === String(k.ID) ? 'selected' : ''}>${esc(k.NAMA_KELAS || k.NAMA)}</option>`).join('')}
+          </select>
+        </div>
+        <div>
+          <label style="font-weight: 600; margin-bottom: 4px; display: block;">Filter Bulan</label>
+          <select id="sppFilterBulanSelect" onchange="onSppFilterChange()" class="input">
+            <option value="">-- Semua Bulan --</option>
+            ${bulanList.map(b => `<option value="${b}" ${sppFilterBulan === b ? 'selected' : ''}>${b}</option>`).join('')}
+          </select>
+        </div>
+        <div>
+          <label style="font-weight: 600; margin-bottom: 4px; display: block;">Tahun</label>
+          <input type="number" id="sppFilterTahunInput" value="${sppFilterTahun}" oninput="onSppFilterChange()" class="input">
+        </div>
+      </div>
+
+      <div class="table-wrap">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Tanggal</th>
+              <th>Nama Siswa</th>
+              <th>Kelas</th>
+              <th>Bulan/Tahun</th>
+              <th>Nominal</th>
+              <th>Status</th>
+              <th>Catatan</th>
+              <th>Aksi</th>
+            </tr>
+          </thead>
+          <tbody id="tbodySpp"></tbody>
+        </table>
+      </div>
+    </div>`;
+
+  filterSppTable();
+}
+
+
+function onSppFilterChange() {
+  sppFilterKelas = $('sppFilterKelasSelect').value;
+  sppFilterBulan = $('sppFilterBulanSelect').value;
+  sppFilterTahun = $('sppFilterTahunInput').value;
+  filterSppTable();
+}
+
+function filterSppTable() {
+  const listSpp = state.data.PEMBAYARAN_SPP || [];
+  const listSiswa = state.data.SISWA || [];
+  const listKelas = state.data.KELAS || [];
+
+  const siswaMap = {};
+  const siswaKelasMap = {};
+  listSiswa.forEach(s => { 
+    siswaMap[String(s.ID)] = s.NAMA; 
+    siswaKelasMap[String(s.ID)] = s.KELAS_ID || s.KELAS || '';
+  });
+
+  const kelasMap = {};
+  listKelas.forEach(k => { kelasMap[String(k.ID)] = k.NAMA_KELAS || k.NAMA; });
+
+  const filtered = listSpp.filter(r => {
+    const rawSiswaId = String(r.SISWA_ID);
+    const kelasIdSiswa = r.KELAS_ID || siswaKelasMap[rawSiswaId] || '';
+
+    if (sppFilterKelas && String(kelasIdSiswa) !== sppFilterKelas) return false;
+    if (sppFilterBulan && String(r.BULAN).toLowerCase() !== sppFilterBulan.toLowerCase()) return false;
+    if (sppFilterTahun && String(r.TAHUN) !== sppFilterTahun.toString()) return false;
+
+    return true;
+  });
+
+  const tbody = $('tbodySpp');
+  if (!tbody) return;
+
+  if (filtered.length === 0) {
+    tbody.innerHTML = `<tr><td colspan="8" style="text-align:center; padding: 20px;" class="muted">Tidak ada data pembayaran SPP yang cocok.</td></tr>`;
+    return;
+  }
+
+  tbody.innerHTML = filtered.map(r => {
+    const rawSiswaId = String(r.SISWA_ID);
+    const kelasId = r.KELAS_ID || siswaKelasMap[rawSiswaId] || '';
+    const isLunas = String(r.STATUS).toUpperCase() === 'LUNAS';
+
+    return `
+      <tr>
+        <td>${formatDateOnly(r.TANGGAL)}</td>
+        <td><strong>${esc(siswaMap[rawSiswaId] || r.SISWA_ID)}</strong></td>
+        <td><span class="badge info">${esc(kelasMap[String(kelasId)] || '-')}</span></td>
+        <td>${esc(r.BULAN)} ${esc(r.TAHUN)}</td>
+        <td>Rp ${Number(r.NOMINAL || 0).toLocaleString('id-ID')}</td>
+        <td><span class="badge ${isLunas ? 'success' : 'danger'}">${esc(r.STATUS)}</span></td>
+        <td>${esc(r.CATATAN || '-')}</td>
+        <td class="table-actions no-print">
+          <button class="btn secondary" style="padding:2px 6px; font-size:11px;" onclick="openForm('PEMBAYARAN_SPP', '${esc(r.ID)}')">Edit</button>
+          <button class="btn danger" style="padding:2px 6px; font-size:11px;" onclick="removeRow('PEMBAYARAN_SPP', '${esc(r.ID)}')">Hapus</button>
+        </td>
+      </tr>
+    `;
+  }).join('');
+}
+
+function cetakSppPdf() {
+  const listSpp = state.data.PEMBAYARAN_SPP || [];
+  const listSiswa = state.data.SISWA || [];
+  const listKelas = state.data.KELAS || [];
+  const settings = (state.data.PENGATURAN || [])[0] || {};
+
+  const siswaMap = {};
+  const siswaNisMap = {};
+  const siswaKelasMap = {};
+  listSiswa.forEach(s => { 
+    siswaMap[String(s.ID)] = s.NAMA;
+    siswaNisMap[String(s.ID)] = s.NIS || '-';
+    siswaKelasMap[String(s.ID)] = s.KELAS_ID || s.KELAS || '';
+  });
+
+  const kelasMap = {};
+  listKelas.forEach(k => { kelasMap[String(k.ID)] = k.NAMA_KELAS || k.NAMA; });
+
+  const filtered = listSpp.filter(r => {
+    const rawSiswaId = String(r.SISWA_ID);
+    const kelasIdSiswa = r.KELAS_ID || siswaKelasMap[rawSiswaId] || '';
+
+    if (sppFilterKelas && String(kelasIdSiswa) !== sppFilterKelas) return false;
+    if (sppFilterBulan && String(r.BULAN).toLowerCase() !== sppFilterBulan.toLowerCase()) return false;
+    if (sppFilterTahun && String(r.TAHUN) !== sppFilterTahun.toString()) return false;
+
+    return true;
+  });
+
+  let totalLunasCount = 0;
+  let totalNominal = 0;
+
+  filtered.forEach(r => {
+    if (String(r.STATUS).toUpperCase() === 'LUNAS') {
+      totalLunasCount++;
+      totalNominal += Number(r.NOMINAL || 0);
+    }
+  });
+
+  const namaKelasText = sppFilterKelas ? (kelasMap[sppFilterKelas] || 'Semua Kelas') : 'Semua Kelas';
+  const periodeText = (sppFilterBulan ? sppFilterBulan + ' ' : '') + sppFilterTahun;
+  const tglCetakText = new Date().toLocaleDateString('id-ID');
+
+  // Isi area print tersembunyi
+  const printArea = $('printArea');
+  if (!printArea) return;
+
+  printArea.style.display = 'block';
+  printArea.innerHTML = `
+    <div style="font-family: Arial, sans-serif; font-size: 11px; color: #000; padding: 10px;">
+      <div style="text-align: center;">
+        <h2 style="font-size: 16px; font-weight: bold; margin: 0; text-transform: uppercase;">${esc(settings.NAMA_LEMBAGA || 'RTQ SEMAI INSAN BESTARI')}</h2>
+        <p style="font-size: 10px; margin: 2px 0 0 0;">${esc(settings.ALAMAT || 'Jl. Saluyu B9 No.23')}</p>
+      </div>
+      <div style="border-bottom: 3px double #000; margin: 8px 0 16px 0;"></div>
+
+      <div style="text-align: center;">
+        <h3 style="font-size: 13px; font-weight: bold; text-decoration: underline; margin: 0 0 4px 0;">REKAPITULASI PEMBAYARAN SPP BULANAN</h3>
+        <p style="font-size: 11px; font-weight: bold; margin: 0 0 16px 0;">Periode: ${esc(periodeText)}</p>
+      </div>
+
+      <table style="width: 100%; margin-bottom: 12px; font-size: 11px; font-weight: bold; border-collapse: collapse;">
+        <tr>
+          <td width="8%">Kelas</td>
+          <td width="2%">:</td>
+          <td width="40%">${esc(namaKelasText)}</td>
+          <td width="15%" style="text-align: right;">Tanggal Cetak</td>
+          <td width="2%" style="text-align: center;">:</td>
+          <td width="33%">${tglCetakText}</td>
+        </tr>
+      </table>
+
+      <table style="width: 100%; border-collapse: collapse; margin-bottom: 16px;">
+        <thead>
+          <tr style="background-color: #f1f5f9;">
+            <th style="border: 1px solid #000; padding: 5px; text-align: center; width: 4%;">NO</th>
+            <th style="border: 1px solid #000; padding: 5px; text-align: center; width: 12%;">NIS</th>
+            <th style="border: 1px solid #000; padding: 5px; text-align: left;">NAMA SISWA</th>
+            <th style="border: 1px solid #000; padding: 5px; text-align: center; width: 15%;">BULAN</th>
+            <th style="border: 1px solid #000; padding: 5px; text-align: center; width: 18%;">TGL BAYAR</th>
+            <th style="border: 1px solid #000; padding: 5px; text-align: right; width: 15%;">NOMINAL</th>
+            <th style="border: 1px solid #000; padding: 5px; text-align: center; width: 12%;">STATUS</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${filtered.length === 0 ? `
+            <tr><td colspan="7" style="border: 1px solid #000; text-align: center; padding: 15px;">Tidak ada data pembayaran.</td></tr>
+          ` : filtered.map((r, i) => {
+            const rawSiswaId = String(r.SISWA_ID);
+            const isLunas = String(r.STATUS).toUpperCase() === 'LUNAS';
+            return `
+              <tr>
+                <td style="border: 1px solid #000; padding: 5px; text-align: center;">${i + 1}</td>
+                <td style="border: 1px solid #000; padding: 5px; text-align: center;">${esc(siswaNisMap[rawSiswaId] || '-')}</td>
+                <td style="border: 1px solid #000; padding: 5px;">${esc(siswaMap[rawSiswaId] || r.SISWA_ID)}</td>
+                <td style="border: 1px solid #000; padding: 5px; text-align: center;">${esc(r.BULAN)}${esc(r.TAHUN)}</td>
+                <td style="border: 1px solid #000; padding: 5px; text-align: center;">${formatDateOnly(r.TANGGAL)}</td>
+                <td style="border: 1px solid #000; padding: 5px; text-align: right;">Rp ${Number(r.NOMINAL || 0).toLocaleString('id-ID')}</td>
+                <td style="border: 1px solid #000; padding: 5px; text-align: center; font-weight: bold; color: ${isLunas ? '#15803d' : '#b91c1c'};">${esc(r.STATUS)}</td>
+              </tr>
+            `;
+          }).join('')}
+        </tbody>
+      </table>
+
+      <div style="display: flex; justify-content: flex-end; margin-bottom: 30px;">
+        <div style="width: 240px; border: 1px solid #000; padding: 6px 10px; font-size: 11px;">
+          <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
+            <span>Total Siswa Lunas:</span>
+            <strong>${totalLunasCount} Siswa</strong>
+          </div>
+          <div style="display: flex; justify-content: space-between;">
+            <span>Total Penerimaan:</span>
+            <strong>Rp ${totalNominal.toLocaleString('id-ID')}</strong>
+          </div>
+        </div>
+      </div>
+
+      <div style="display: flex; justify-content: space-between; text-align: center; margin-top: 30px;">
+        <div style="width: 200px;">
+          <div>Mengetahui,</div>
+          <div>Kepala Sekolah</div>
+          <div style="height: 60px;"></div>
+          <div style="font-weight: bold; text-decoration: underline;">${esc(settings.KEPALA_SEKOLAH || 'Bambang Sukarwan')}</div>
+        </div>
+        <div style="width: 200px;">
+          <div>Petugas / Bendahara</div>
+          <div style="height: 60px;"></div>
+          <div style="font-weight: bold; text-decoration: underline;">${esc(state.user?.NAMA || state.user?.USERNAME || 'Administrator')}</div>
+        </div>
+      </div>
+    </div>
+  `;
+
+  window.print();
+  
+  // Sembunyikan kembali setelah dialog print selesai
+  setTimeout(() => {
+    printArea.style.display = 'none';
+  }, 1000);
+}
+// ==========================================
+// MODUL KARTU SPP SISWA
+// ==========================================
+function renderKartuSpp() {
+  const listKelas = state.data.KELAS || [];
+  const listSiswa = state.data.SISWA || [];
+
+  $('content').innerHTML = `
+    <!-- Container Khusus Cetak -->
+    <div id="printArea"></div>
+
+    <div class="page-head no-print">
+      <div>
+        <h2>Kartu Pembayaran SPP</h2>
+        <div class="muted">Pilih siswa untuk cetak atau lihat kartu riwayat SPP</div>
+      </div>
+      <button type="button" class="btn primary" onclick="cetakKartuSpp()">🖨️ Cetak Kartu SPP PDF</button>
+    </div>
+    <div class="card no-print">
+      <div class="form-grid">
+        <label>Filter Kelas
+          <select id="sppKelas" onchange="filterSiswaByKelas()">
+            <option value="">-- Semua Kelas --</option>
+            ${listKelas.map(k => `<option value="${esc(k.ID)}">${esc(k.NAMA_KELAS || k.NAMA)}</option>`).join('')}
+          </select>
+        </label>
+        <label>Pilih Siswa
+          <select id="sppSiswa" onchange="renderKartuSppPreview()">
+            <option value="">-- Pilih Siswa --</option>
+            ${listSiswa.map(s => `<option value="${esc(s.ID)}">${esc(s.NIS || '-')} - ${esc(s.NAMA)}</option>`).join('')}
+          </select>
+        </label>
+        <label>Tahun Pelajaran / Tahun
+          <input id="sppTahun" type="number" value="${new Date().getFullYear()}" onchange="renderKartuSppPreview()">
+        </label>
+      </div>
+    </div>
+    <div id="kartuSppPreviewContainer" class="no-print"></div>`;
+}
+
+function filterSiswaByKelas() {
+  const kelasId = $('sppKelas').value;
+  const listSiswa = state.data.SISWA || [];
+
+  const filtered = kelasId 
+    ? listSiswa.filter(s => String(s.KELAS_ID || s.KELAS || '') === String(kelasId)) 
+    : listSiswa;
+
+  let optionsHtml = '<option value="">-- Pilih Siswa --</option>';
+  filtered.forEach(s => {
+    optionsHtml += `<option value="${esc(s.ID)}">${esc(s.NIS || '-')} - ${esc(s.NAMA)}</option>`;
+  });
+
+  $('sppSiswa').innerHTML = optionsHtml;
+  renderKartuSppPreview();
+}
+
+function renderKartuSppPreview() {
+  const siswaId = $('sppSiswa') ?$('sppSiswa').value : '';
+  const tahun = $('sppTahun') ?$('sppTahun').value : new Date().getFullYear();
+  const container = $('kartuSppPreviewContainer');
+
+  if (!container) return;
+
+  if (!siswaId) {
+    container.innerHTML = '';
+    return;
+  }
+
+  const siswa = (state.data.SISWA || []).find(s => String(s.ID) === String(siswaId)) || {};
+  const bulanList = ['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'];
+  const dataSpp = (state.data.PEMBAYARAN_SPP || []).filter(item => 
+    String(item.SISWA_ID) === String(siswaId) && String(item.TAHUN) === String(tahun)
+  );
+
+  let rowsHtml = bulanList.map((bln, idx) => {
+    const record = dataSpp.find(x => String(x.BULAN).toLowerCase() === bln.toLowerCase());
+    const isLunas = record && String(record.STATUS).toUpperCase() === 'LUNAS';
+    return `
+      <tr>
+        <td style="text-align:center;">${idx + 1}</td>
+        <td><strong>${bln} ${tahun}</strong></td>
+        <td>${record?.TANGGAL ? formatDateOnly(record.TANGGAL) : '-'}</td>
+        <td>Rp ${Number(record?.NOMINAL || 0).toLocaleString('id-ID')}</td>
+        <td><span class="badge ${isLunas ? 'success' : 'danger'}">${isLunas ? 'LUNAS' : 'BELUM BAYAR'}</span></td>
+        <td>${esc(record?.CATATAN || '-')}</td>
+      </tr>
+    `;
+  }).join('');
+
+  container.innerHTML = `
+    <div class="card" style="margin-top:15px;">
+      <h3>Riwayat SPP: ${esc(siswa.NAMA || '')} (${esc(siswa.NIS || '-')})</h3>
+      <div class="table-responsive">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th width="40">No</th>
+              <th>Bulan</th>
+              <th>Tanggal Bayar</th>
+              <th>Nominal</th>
+              <th>Status</th>
+              <th>Keterangan</th>
+            </tr>
+          </thead>
+          <tbody>${rowsHtml}</tbody>
+        </table>
+      </div>
+    </div>`;
+}
+
+function cetakKartuSpp() {
+  // Ambil elemen dengan prioritas ID elemen DOM yang ada pada halaman
+  const elSiswa = $('sppSiswa') || $('sppKartuSiswaSelect') || $('sppSiswaSelect') || $('siswaSelect') || document.querySelector('select[name="siswa"]');
+const elTahun = $('sppTahun') || $('sppKartuTahunInput') || $('sppTahunInput') || document.querySelector('input[type="number"]');
+
+  const siswaId = elSiswa ? elSiswa.value : '';
+  const tahunInput = elTahun ? elTahun.value : new Date().getFullYear().toString();
+
+  if (!siswaId) {
+    alert('Silakan pilih siswa terlebih dahulu!');
+    return;
+  }
+
+  // Pengambilan Data
+  const listSiswa = state.data.SISWA || [];
+  const listKelas = state.data.KELAS || [];
+  const listSpp = state.data.PEMBAYARAN_SPP || [];
+  const settings = (state.data.PENGATURAN || [])[0] || {};
+
+  // Cari data siswa berdasarkan ID atau NIS
+  const siswa = listSiswa.find(s => String(s.ID) === String(siswaId) || String(s.NIS) === String(siswaId));
+  if (!siswa) {
+    alert('Data siswa tidak ditemukan!');
+    return;
+  }
+
+  const kelasObj = listKelas.find(k => String(k.ID) === String(siswa.KELAS_ID || siswa.KELAS));
+  const namaKelas = kelasObj ? (kelasObj.NAMA_KELAS || kelasObj.NAMA) : '-';
+
+  const bulanList = [
+    'Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni',
+    'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'
+  ];
+
+  const sppMap = {};
+  listSpp.forEach(r => {
+    if (String(r.SISWA_ID) === String(siswa.ID) && String(r.TAHUN) === String(tahunInput)) {
+      const bulanKey = String(r.BULAN).trim().toLowerCase();
+      sppMap[bulanKey] = r;
+    }
+  });
+
+  const tglCetakText = new Date().toLocaleDateString('id-ID', {
+    day: 'numeric',
+    month: 'long',
+    year: 'numeric'
+  });
+
+  const printArea = $('printArea');
+  if (!printArea) return;
+
+  printArea.style.display = 'block';
+  printArea.innerHTML = `
+    <div style="font-family: 'Segoe UI', Arial, sans-serif; font-size: 11px; color: #1e293b; padding: 20px; max-width: 800px; margin: 0 auto;">
+      
+      <!-- KOP SURAT -->
+      <div style="display: flex; align-items: center; justify-content: space-between; border-bottom: 2px solid #0f766e; padding-bottom: 12px; margin-bottom: 16px;">
+        <div style="flex: 1;">
+          <h2 style="font-size: 18px; font-weight: 800; color: #0f766e; margin: 0; text-transform: uppercase; letter-spacing: 0.5px;">
+            ${esc(settings.NAMA_LEMBAGA || 'RTQ SEMAI INSAN BESTARI')}
+          </h2>
+          <p style="font-size: 11px; color: #475569; margin: 3px 0 0 0;">
+            ${esc(settings.ALAMAT || 'Jl. Saluyu B9 No.23, Bandung')}
+          </p>
+        </div>
+        <div style="text-align: right; background: #f0fdf4; border: 1px solid #bbf7d0; padding: 6px 12px; border-radius: 6px;">
+          <span style="font-size: 10px; text-transform: uppercase; color: #166534; font-weight: bold; display: block;">KARTU SPP SISWA</span>
+          <span style="font-size: 13px; font-weight: bold; color: #0f766e;">Tahun ${esc(tahunInput)}</span>
+        </div>
+      </div>
+
+      <!-- BIODATA SISWA -->
+      <div style="background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px; padding: 10px 14px; margin-bottom: 16px; display: grid; grid-template-columns: 1fr 1fr; gap: 8px; font-size: 11px;">
+        <div>
+          <table style="width: 100%; border-collapse: collapse;">
+            <tr>
+              <td style="width: 90px; color: #64748b; font-weight: 600; padding: 2px 0;">NIS / NISN</td>
+              <td style="width: 10px; color: #64748b;">:</td>
+              <td style="font-weight: 700; color: #0f172a;">${esc(siswa.NIS || '-')}</td>
+            </tr>
+            <tr>
+              <td style="color: #64748b; font-weight: 600; padding: 2px 0;">Nama Siswa</td>
+              <td style="color: #64748b;">:</td>
+              <td style="font-weight: 700; color: #0f172a; font-size: 12px;">${esc(siswa.NAMA || '-')}</td>
+            </tr>
+          </table>
+        </div>
+        <div>
+          <table style="width: 100%; border-collapse: collapse;">
+            <tr>
+              <td style="width: 90px; color: #64748b; font-weight: 600; padding: 2px 0;">Kelas</td>
+              <td style="width: 10px; color: #64748b;">:</td>
+              <td style="font-weight: 700; color: #0f172a;">${esc(namaKelas)}</td>
+            </tr>
+            <tr>
+              <td style="color: #64748b; font-weight: 600; padding: 2px 0;">Tgl Cetak</td>
+              <td style="color: #64748b;">:</td>
+              <td style="font-weight: 600; color: #334155;">${tglCetakText}</td>
+            </tr>
+          </table>
+        </div>
+      </div>
+
+      <!-- TABEL RIWAYAT SPP -->
+      <table style="width: 100%; border-collapse: collapse; margin-bottom: 20px;">
+        <thead>
+          <tr style="background-color: #0f766e; color: #ffffff;">
+            <th style="border: 1px solid #0d9488; padding: 6px 8px; text-align: center; width: 5%;">NO</th>
+            <th style="border: 1px solid #0d9488; padding: 6px 10px; text-align: left; width: 20%;">BULAN</th>
+            <th style="border: 1px solid #0d9488; padding: 6px 10px; text-align: center; width: 20%;">TANGGAL BAYAR</th>
+            <th style="border: 1px solid #0d9488; padding: 6px 10px; text-align: right; width: 20%;">NOMINAL</th>
+            <th style="border: 1px solid #0d9488; padding: 6px 10px; text-align: center; width: 15%;">STATUS</th>
+            <th style="border: 1px solid #0d9488; padding: 6px 10px; text-align: left;">KETERANGAN</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${bulanList.map((bulan, idx) => {
+            const dataBulan = sppMap[bulan.toLowerCase()];
+            const isLunas = dataBulan && String(dataBulan.STATUS).toUpperCase() === 'LUNAS';
+            const bgColor = idx % 2 === 0 ? '#ffffff' : '#f8fafc';
+            
+            return `
+              <tr style="background-color: ${bgColor};">
+                <td style="border: 1px solid #cbd5e1; padding: 6px; text-align: center;">${idx + 1}</td>
+                <td style="border: 1px solid #cbd5e1; padding: 6px 10px; font-weight: 600;">${bulan}${esc(tahunInput)}</td>
+                <td style="border: 1px solid #cbd5e1; padding: 6px; text-align: center; color: #475569;">
+                  ${dataBulan && dataBulan.TANGGAL ? formatDateOnly(dataBulan.TANGGAL) : '-'}
+                </td>
+                <td style="border: 1px solid #cbd5e1; padding: 6px 10px; text-align: right; font-weight: 600;">
+                  ${dataBulan ? 'Rp ' + Number(dataBulan.NOMINAL || 0).toLocaleString('id-ID') : '-'}
+                </td>
+                <td style="border: 1px solid #cbd5e1; padding: 6px; text-align: center;">
+                  <span style="display: inline-block; padding: 2px 8px; border-radius: 12px; font-size: 10px; font-weight: 700; ${
+                    isLunas 
+                      ? 'background-color: #dcfce7; color: #15803d;' 
+                      : 'background-color: #fee2e2; color: #b91c1c;'
+                  }">
+                    ${isLunas ? 'LUNAS' : 'BELUM BAYAR'}
+                  </span>
+                </td>
+                <td style="border: 1px solid #cbd5e1; padding: 6px 10px; color: #64748b; font-style: italic;">
+                  ${dataBulan && dataBulan.CATATAN ? esc(dataBulan.CATATAN) : '-'}
+                </td>
+              </tr>
+            `;
+          }).join('')}
+        </tbody>
+      </table>
+
+      <!-- TANDA TANGAN -->
+      <div style="display: flex; justify-content: space-between; align-items: flex-end; margin-top: 20px; page-break-inside: avoid;">
+        <div style="font-size: 10px; color: #64748b; max-width: 300px; border-left: 2px solid #cbd5e1; padding-left: 8px;">
+          * Simpan kartu pembayaran ini sebagai bukti pembayaran SPP yang sah.<br>
+          * Tunjukkan kartu ini saat melakukan konfirmasi pembayaran.
+        </div>
+        <div style="text-align: center; width: 200px;">
+          <div style="font-size: 11px; margin-bottom: 4px;">Bendahara / Petugas,</div>
+          <div style="height: 55px;"></div>
+          <div style="font-weight: bold; text-decoration: underline; font-size: 11px;">
+            ${esc(state.user?.NAMA || state.user?.USERNAME || 'Administrator')}
+          </div>
+        </div>
+      </div>
+
+    </div>
+  `;
+
+  window.print();
+
+  setTimeout(() => {
+    printArea.style.display = 'none';
+  }, 1000);
+}
+
+
+
+// ==========================================
+// PENGATURAN LEMBAGA & BACKUP
+// ==========================================
+function renderPengaturan() {
+  const s = (state.data.PENGATURAN || [])[0] || {};
+  const cols = ['NAMA_LEMBAGA', 'NPSN_NSM', 'ALAMAT', 'DESA', 'KECAMATAN', 'KABUPATEN', 'PROVINSI', 'LOGO_URL', 'KEPALA_SEKOLAH', 'NIP_KEPALA', 'TAHUN_PELAJARAN', 'SEMESTER'];
+
+  $('content').innerHTML = `
+    <div class="page-head">
+      <div>
+        <h2>Pengaturan Lembaga</h2>
+        <div class="muted">Identitas sekolah yang digunakan pada kop surat dan laporan</div>
+      </div>
+    </div>
+    <div class="card">
+      <form id="settingsForm">
+        <div class="form-grid">
+          ${cols.map(k => fieldHtml('PENGATURAN', k, s[k] || '')).join('')}
+        </div>
+        <div class="form-actions" style="margin-top:15px;">
+          <button class="btn primary" type="submit">💾 Simpan Pengaturan</button>
+        </div>
+      </form>
+    </div>
+    <div class="card">
+      <h3>Backup & Restore Database</h3>
+      <p class="muted">Gunakan fitur ini untuk membuat cadangan data atau memulihkan data dari berkas JSON.</p>
+      <div class="actions" style="display:flex; gap:10px;">
+        <button class="btn secondary" onclick="doBackup()">💾 Backup Data (.json)</button>
+        <label class="btn secondary" style="cursor:pointer;">
+          ↩ Restore Data
+          <input id="restoreFile" type="file" accept=".json" hidden>
+        </label>
+      </div>
+    </div>`;
+
+  $('settingsForm').onsubmit = async e => {
+    e.preventDefault();
+    const fd = new FormData(e.target);
+    const data = { ID: s.ID || 'SET-0001' };
+    fd.forEach((v, k) => data[k] = v);
+
+    try {
+      showLoading(true);
+      await call('apiSave', 'PENGATURAN', data, state.user.USERNAME);
+      toast('Pengaturan berhasil disimpan.');
+      await refresh();
+    } catch (err) {
+      toast('Gagal menyimpan pengaturan: ' + err.message);
+    } finally {
+      showLoading(false);
+    }
+  };
+
+  $('restoreFile').onchange = restoreBackup;
+}
+
+function doBackup() {
+  const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(state.data, null, 2));
+  const dlAnchorElem = document.createElement('a');
+  dlAnchorElem.setAttribute("href", dataStr);
+  dlAnchorElem.setAttribute("download", `mysib_backup_${today()}.json`);
+  document.body.appendChild(dlAnchorElem);
+  dlAnchorElem.click();
+  dlAnchorElem.remove();
+}
+
+function restoreBackup(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+
+  const reader = new FileReader();
+  reader.onload = async function(evt) {
+    try {
+      const parsedData = JSON.parse(evt.target.result);
+      if (confirm('Apakah Anda yakin ingin memulihkan seluruh database dari file cadangan ini?')) {
+        showLoading(true);
+        await call('restoreDatabase', parsedData, state.user.USERNAME);
+        toast('Database berhasil dipulihkan!');
+        await refresh();
+      }
+    } catch(err) {
+      toast('Gagal memproses file backup: ' + err.message);
+    } finally {
+      showLoading(false);
+    }
+  };
+  reader.readAsText(file);
+}
+
+// ==========================================
+// IMPORT DATA SISWA (CSV)
+// ==========================================
+function openImport() {
+  const html = `
+    <div style="display:flex; flex-direction:column; gap:12px;">
+      <p class="muted">Pilih file berformat <strong>CSV</strong> untuk mengunggah banyak data siswa sekaligus ke sistem.</p>
+      <input type="file" id="csvFile" accept=".csv" class="input">
+      <div class="form-actions" style="display:flex; justify-content:flex-end; gap:8px; margin-top:10px;">
+        <button class="btn secondary" type="button" onclick="closeModal()">Batal</button>
+        <button class="btn primary" type="button" onclick="importCsv()">📥 Proses Import</button>
+      </div>
+    </div>
+  `;
+  openModal('Import Data Siswa via CSV', html);
+}
+
+function importCsv() {
+  const fileInput = $('csvFile');
+  if (!fileInput || !fileInput.files[0]) {
+    toast('Silakan pilih file CSV terlebih dahulu.');
+    return;
+  }
+
+  const file = fileInput.files[0];
+  const reader = new FileReader();
+
+  reader.onload = async function(e) {
+    const text = e.target.result;
+    const lines = text.split(/\r\n|\n/);
+    if (lines.length < 2) {
+      toast('File CSV kosong atau format tidak valid.');
+      return;
+    }
+
+    const headers = lines[0].split(',').map(h => h.trim().toUpperCase());
+    const records = [];
+
+    for (let i = 1; i < lines.length; i++) {
+      if (!lines[i].trim()) continue;
+      const values = lines[i].split(',').map(v => v.trim());
+      const row = { ID: 'SISWA_' + Date.now() + '_' + i };
+      headers.forEach((h, idx) => {
+        row[h] = values[idx] || '';
+      });
+      records.push(row);
+    }
+
+    try {
+      showLoading(true);
+      await call('importBulkSiswa', records, state.user.USERNAME);
+      toast(`${records.length} data siswa berhasil diimport.`);
+      closeModal();
+      await refresh();
+    } catch (err) {
+      toast('Gagal mengimport CSV: ' + err.message);
+    } finally {
+      showLoading(false);
+    }
+  };
+
+  reader.readAsText(file);
+}
+</script>
+</body>
+</html>
